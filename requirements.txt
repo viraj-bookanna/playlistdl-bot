@@ -1,0 +1,6 @@
+asyncio
+telethon
+python-dotenv
+hachoir
+cryptg
+pillow
