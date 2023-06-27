@@ -42,15 +42,15 @@ def check(log_file):
     except Exception as e:
         print(repr(e))
         return ''
-last = 0
-last_edited_time = 0
-async def upload_callback(current, total, event, file_org_name):
-    global last,last_edited_time
+class TimeKeeper:
+    last = 0
+    last_edited_time = 0
+async def upload_callback(current, total, event, file_org_name, tk):
     percentage = round(current/total*100, 2)
-    if last+2 < percentage and last_edited_time+5 < time.time():
+    if tk.last+2 < percentage and tk.last_edited_time+5 < time.time():
         await event.edit("Uploading {}\nFile Name: {}\nSize: {}\nUploaded: {}".format(progress_bar(percentage), file_org_name, humanify(total), humanify(current)))
-        last = percentage
-        last_edited_time = time.time()
+        tk.last = percentage
+        tk.last_edited_time = time.time()
 
 @bot.on(events.NewMessage(pattern=r"^(https?://[a-zA-Z0-9./\-]+\.m3u8)(?: ?\| ?([a-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
 async def handler(event):
@@ -74,7 +74,8 @@ async def handler(event):
             last_edit_time = time.time()
         await asyncio.sleep(2)
     await msg.edit('Now uploading...')
-    await bot.send_file(event.chat, file=outFilePath, caption=inFileName, progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName), supports_streaming=True)
+    tk = TimeKeeper()
+    await bot.send_file(event.chat, file=outFilePath, caption=inFileName, progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk), supports_streaming=True)
     shutil.rmtree(tmpdir)
 
 with bot:
