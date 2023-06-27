@@ -75,7 +75,14 @@ async def handler(event):
         await asyncio.sleep(2)
     await msg.edit('Now uploading...')
     tk = TimeKeeper()
-    await bot.send_file(event.chat, file=outFilePath, caption=inFileName, progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk), supports_streaming=True)
+    await bot.send_file(
+        event.chat,
+        file=outFilePath,
+        thumb=f'{outFilePath}.jpg',
+        caption=inFileName,
+        progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk),
+        supports_streaming=True
+    )
     shutil.rmtree(tmpdir)
 
 with bot:
