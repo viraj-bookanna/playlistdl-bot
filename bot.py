@@ -79,7 +79,7 @@ async def handler(event):
         event.chat,
         file=outFilePath,
         thumb=f'{outFilePath}.jpg',
-        caption=inFileName,
+        caption=event.pattern_match[2],
         progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk),
         supports_streaming=True
     )
