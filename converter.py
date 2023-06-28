@@ -1,4 +1,4 @@
-import os,sys,json,urllib.parse,re,requests
+import os,sys,urllib.parse,re,requests,time
 from Crypto.Cipher import AES
 
 def decode_captcha(data):
@@ -26,4 +26,5 @@ print(cmd)
 os.system(cmd)
 cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01.000 -vframes 1 {outFilePath}.jpg'
 os.system(cmd2)
+time.sleep(3)
 os.remove(logFilePath)
