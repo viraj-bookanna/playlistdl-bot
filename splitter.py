@@ -27,5 +27,7 @@ cmd2 = f'ffmpeg -i {inFileName} -ss {half} -c copy "{inFileName}2.mp4" 1>NUL 2>"
 os.system(cmd2)
 cmd2 = f'ffmpeg -i {inFileName}2.mp4 -ss 00:00:01.000 -vframes 1 {inFileName}2.mp4.jpg'
 os.system(cmd2)
+with open(f"{inFileName}.parts", 'w') as f:
+    f.write('2')
 time.sleep(3)
 os.remove(logFilePath)
