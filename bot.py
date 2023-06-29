@@ -1,5 +1,6 @@
 import asyncio,logging,os,random,string,re,subprocess,time,shutil
 from telethon import TelegramClient, events
+from telethon.tl.types import MessageEntityUrl
 from dotenv import load_dotenv
 from datetime import datetime
 
@@ -13,6 +14,18 @@ LOG_GROUP = int(os.getenv("LOG_GROUP_ID"))
 
 bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
+def find_all_urls(message):
+    ret = list()
+    if message.entities is None:
+        return ret
+    for entity in message.entities:
+        if type(entity) == MessageEntityUrl:
+            url = message.text[entity.offset:entity.offset+entity.length]
+            if url.startswith('http://') or url.startswith('https://'):
+                ret.append(url)
+            else:
+                ret.append('http://'+url)
+    return ret
 def humanify(byte_size):
     siz_list = ['KB', 'MB', 'GB']
     for i in range(len(siz_list)):
@@ -84,12 +97,12 @@ async def upload_and_send(event, msg, outFilePath, outFileName, caption):
         supports_streaming=True
     )
 
-@bot.on(events.NewMessage(pattern=r"^(https?://[a-zA-Z0-9./\-&=?_]+\.m3u8)(?: ?\| ?([a-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
+@bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| ([a-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
 async def handler(event):
     msg = await event.respond('wait...')
     tmpdir = os.path.join('files', ''.join([random.choice(string.ascii_letters+string.digits) for i in range(15)]))
     os.makedirs(tmpdir)
-    inFileName = event.pattern_match[1]
+    inFileName = find_all_urls(event.message)[0]
     outFileName = f'{event.pattern_match[2]}.mp4'
     outFilePath = os.path.join(tmpdir, outFileName)
     cmd = ['python', 'converter.py', inFileName, outFilePath]
