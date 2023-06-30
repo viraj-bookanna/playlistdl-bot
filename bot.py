@@ -102,26 +102,30 @@ async def handler(event):
     msg = await event.respond('wait...')
     tmpdir = os.path.join('files', ''.join([random.choice(string.ascii_letters+string.digits) for i in range(15)]))
     os.makedirs(tmpdir)
-    inFileName = find_all_urls(event.message)[0]
-    outFileName = f'{event.pattern_match[2]}.mp4'
-    outFilePath = os.path.join(tmpdir, outFileName)
-    cmd = ['python', 'converter.py', inFileName, outFilePath]
-    await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
-    await msg.edit('Now uploading...')
-    parts = 1
-    if 1024**3*2 < os.path.getsize(outFilePath):
-        cmd = ['python', 'splitter.py', outFilePath]
+    try:
+        inFileName = find_all_urls(event.message)[0]
+        outFileName = f'{event.pattern_match[2]}.mp4'
+        outFilePath = os.path.join(tmpdir, outFileName)
+        cmd = ['python', 'converter.py', inFileName, outFilePath]
         await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
-        with open(f"{outFilePath}.parts", 'r') as f:
-            parts = int(f.read().strip())
-    for i in range(parts):
-        i+=1
-        await upload_and_send(event,
-            msg,
-            outFilePath if parts==1 else f'{outFilePath}{i}.mp4',
-            outFileName if parts==1 else f'{outFileName}_{i}',
-            event.pattern_match[2] if parts==1 else f'{event.pattern_match[2]} part {i}'
-        )
+        await msg.edit('Now uploading...')
+        parts = 1
+        if 1024**3*2 < os.path.getsize(outFilePath):
+            cmd = ['python', 'splitter.py', outFilePath]
+            await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
+            with open(f"{outFilePath}.parts", 'r') as f:
+                parts = int(f.read().strip())
+        for i in range(parts):
+            i+=1
+            await upload_and_send(event,
+                msg,
+                outFilePath if parts==1 else f'{outFilePath}{i}.mp4',
+                outFileName if parts==1 else f'{outFileName}_{i}',
+                event.pattern_match[2] if parts==1 else f'{event.pattern_match[2]} part {i}'
+            )
+        await msg.delete()
+    except Exception as e:
+        await msg.edit(repr(e))
     shutil.rmtree(tmpdir)
 
 with bot:
