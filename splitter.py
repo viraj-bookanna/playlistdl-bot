@@ -1,4 +1,4 @@
-import os,sys,re,time
+import os,sys,re,time,math
 from datetime import datetime
 
 def seconds_to_human_time(sec):
@@ -7,9 +7,17 @@ def seconds_to_human_time(sec):
     mins = sec // 60
     sec %= 60
     return "%02d:%02d:%02d" % (hrs, mins, sec) 
+def human_time_to_seconds(human_time):
+    return (datetime.strptime(raw_duration, "%H:%M:%S.%f") - datetime(1900, 1, 1)).total_seconds()
 
 inFileName = sys.argv[1]
 logFilePath = f"{inFileName}.log"
+size_gb = os.path.getsize(inFileName)/1024**3
+part_count = math.ceil(size_gb/2) # number of 2 gb parts
+with open(f"{inFileName}.parts", 'w') as f:
+    f.write(str(part_count))
+if part_count == 1:
+    exit()
 cmd = f'ffmpeg -i "{inFileName}" 1>NUL 2>"{inFileName}.info"'
 os.system(cmd)
 with open(f"{inFileName}.info", 'r') as f:
@@ -17,17 +25,19 @@ with open(f"{inFileName}.info", 'r') as f:
 os.remove(f"{inFileName}.info")
 duration_match = re.search(r"Duration: (.*?), start:", content)
 raw_duration = duration_match.group(1)
-duration = datetime.strptime(raw_duration, "%H:%M:%S.%f")
-half = seconds_to_human_time((duration - datetime(1900, 1, 1)).total_seconds()/2)
-cmd2 = f'ffmpeg -i {inFileName} -t {half} -c copy "{inFileName}1.mp4" 1>NUL 2>"{logFilePath}"'
+one_part_len_seconds = round(human_time_to_seconds(raw_duration)/part_count)
+one_part_length_human = seconds_to_human_time(one_part_len_seconds)
+for i in range(1, part_count):
+    start = seconds_to_human_time(one_part_len_seconds*(i-1))
+    cmd2 = f'ffmpeg -i {inFileName} -ss {start} -t {one_part_length_human} -c copy "{inFileName}{i}.mp4" 1>NUL 2>"{logFilePath}"'
+    os.system(cmd2)
+    cmd2 = f'ffmpeg -i {inFileName}{i}.mp4 -ss 00:00:01 -vframes 1 {inFileName}{i}.mp4.jpg'
+    os.system(cmd2)
+# last part splitted below
+start = seconds_to_human_time(one_part_len_seconds*(part_count-1))
+cmd2 = f'ffmpeg -i {inFileName} -ss {start} -c copy "{inFileName}{part_count}.mp4" 1>NUL 2>"{logFilePath}"'
 os.system(cmd2)
-cmd2 = f'ffmpeg -i {inFileName}1.mp4 -ss 00:00:01.000 -vframes 1 {inFileName}1.mp4.jpg'
+cmd2 = f'ffmpeg -i {inFileName}{part_count}.mp4 -ss 00:00:01 -vframes 1 {inFileName}{part_count}.mp4.jpg'
 os.system(cmd2)
-cmd2 = f'ffmpeg -i {inFileName} -ss {half} -c copy "{inFileName}2.mp4" 1>NUL 2>"{logFilePath}"'
-os.system(cmd2)
-cmd2 = f'ffmpeg -i {inFileName}2.mp4 -ss 00:00:01.000 -vframes 1 {inFileName}2.mp4.jpg'
-os.system(cmd2)
-with open(f"{inFileName}.parts", 'w') as f:
-    f.write('2')
 time.sleep(3)
 os.remove(logFilePath)

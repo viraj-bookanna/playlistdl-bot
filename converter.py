@@ -24,7 +24,7 @@ logFilePath = f"{outFilePath}.log"
 cmd = f'ffmpeg{headers} -i "{inFileName}" -c copy "{outFilePath}" 1>NUL 2>"{logFilePath}"'
 print(cmd)
 os.system(cmd)
-cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01.000 -vframes 1 {outFilePath}.jpg'
+cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01 -vframes 1 {outFilePath}.jpg'
 os.system(cmd2)
 time.sleep(3)
 os.remove(logFilePath)

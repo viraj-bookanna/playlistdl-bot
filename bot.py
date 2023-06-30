@@ -38,17 +38,17 @@ def progress_bar(percentage):
     prefix = round(percentage/progressbar_length) * prefix_char
     suffix = (progressbar_length-round(percentage/progressbar_length)) * suffix_char
     return "{}{} {}%".format(prefix, suffix, percentage)
+def human_time_to_seconds(human_time):
+    return (datetime.strptime(human_time, "%H:%M:%S.%f") - datetime(1900, 1, 1)).total_seconds()
 def check(log_file):
     try:
         with open(log_file, 'r') as file:
             content = file.read()
         duration_match = re.search(r"Duration: (.*?), start:", content)
         raw_duration = duration_match.group(1)
-        duration = datetime.strptime(raw_duration, "%H:%M:%S.%f")
         time_matches = re.findall(r"time=(.*?) bitrate", content)
         raw_time = time_matches[-1]
-        time = datetime.strptime(raw_time, "%H:%M:%S.%f")
-        fraction = 0 if duration == 0 else (time - datetime(1900, 1, 1)) / (duration - datetime(1900, 1, 1))
+        fraction = human_time_to_seconds(raw_time) / human_time_to_seconds(raw_duration)
         progress = progress_bar(round(fraction * 100, 2))
         status = f"Downloading: {progress}\nDuration: {raw_duration}\nCurrent Time: {raw_time}"
         return status
@@ -109,9 +109,7 @@ async def handler(event):
     await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
     await msg.edit('Now uploading...')
     parts = 1
-    if os.path.getsize(outFilePath) > 1024**3*4:
-        await msg.edit('Now uploading...')
-    elif 1024**3*2 < os.path.getsize(outFilePath) < 1024**3*4:
+    if 1024**3*2 < os.path.getsize(outFilePath):
         cmd = ['python', 'splitter.py', outFilePath]
         await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
         with open(f"{outFilePath}.parts", 'r') as f:
