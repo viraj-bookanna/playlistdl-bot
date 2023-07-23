@@ -1,4 +1,4 @@
-import os,sys,re,time,math
+import os,sys,re,time,math,platform
 from datetime import datetime
 
 def seconds_to_human_time(sec):
@@ -10,8 +10,10 @@ def seconds_to_human_time(sec):
 def human_time_to_seconds(human_time):
     return (datetime.strptime(raw_duration, "%H:%M:%S.%f") - datetime(1900, 1, 1)).total_seconds()
 
+redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 logFilePath = f"{inFileName}.log"
+redir = redir.format(logFilePath)
 size_gb = os.path.getsize(inFileName)/1024**3
 part_count = math.ceil(size_gb/2) # number of 2 gb parts
 with open(f"{inFileName}.parts", 'w') as f:
@@ -29,13 +31,13 @@ one_part_len_seconds = round(human_time_to_seconds(raw_duration)/part_count)
 one_part_length_human = seconds_to_human_time(one_part_len_seconds)
 for i in range(1, part_count):
     start = seconds_to_human_time(one_part_len_seconds*(i-1))
-    cmd2 = f'ffmpeg -i {inFileName} -ss {start} -t {one_part_length_human} -c copy "{inFileName}{i}.mp4" 1>NUL 2>"{logFilePath}"'
+    cmd2 = f'ffmpeg -i {inFileName} -ss {start} -t {one_part_length_human} -c copy "{inFileName}{i}.mp4" {redir}'
     os.system(cmd2)
     cmd2 = f'ffmpeg -i {inFileName}{i}.mp4 -ss 00:00:01 -vframes 1 {inFileName}{i}.mp4.jpg'
     os.system(cmd2)
 # last part splitted below
 start = seconds_to_human_time(one_part_len_seconds*(part_count-1))
-cmd2 = f'ffmpeg -i {inFileName} -ss {start} -c copy "{inFileName}{part_count}.mp4" 1>NUL 2>"{logFilePath}"'
+cmd2 = f'ffmpeg -i {inFileName} -ss {start} -c copy "{inFileName}{part_count}.mp4" {redir}'
 os.system(cmd2)
 cmd2 = f'ffmpeg -i {inFileName}{part_count}.mp4 -ss 00:00:01 -vframes 1 {inFileName}{part_count}.mp4.jpg'
 os.system(cmd2)

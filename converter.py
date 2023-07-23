@@ -1,4 +1,4 @@
-import os,sys,urllib.parse,re,requests,time
+import os,sys,urllib.parse,re,requests,time,platform
 from Crypto.Cipher import AES
 
 def decode_captcha(data):
@@ -14,6 +14,7 @@ def decode_captcha(data):
         return m2[1]
     return False
 
+redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 headers = ''
 if 'aplusewings' in inFileName:
@@ -21,7 +22,8 @@ if 'aplusewings' in inFileName:
     headers = f' -headers "Cookie: {cookie}"'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
-cmd = f'ffmpeg{headers} -i "{inFileName}" -c copy "{outFilePath}" 1>NUL 2>"{logFilePath}"'
+redir = redir.format(logFilePath)
+cmd = f'ffmpeg{headers} -i "{inFileName}" -c copy "{outFilePath}" {redir}'
 print(cmd)
 os.system(cmd)
 cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01 -vframes 1 {outFilePath}.jpg'
