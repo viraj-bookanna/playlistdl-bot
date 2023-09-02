@@ -18,8 +18,9 @@ redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 headers = ''
 if 'aplusewings' in inFileName:
-    cookie = decode_captcha(requests.get(inFileName, verify=False).text)
-    headers = f' -headers "Cookie: {cookie}"'
+    proxy = os.environ["HTTP_PROXY"]
+    cookie = decode_captcha(requests.get(inFileName, proxies={"http":proxy,"https":proxy}, headers={'User-Agent': 'android'}, verify=False).text)
+    headers = f' -http_proxy {proxy}  -headers "Cookie: {cookie}"'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
 redir = redir.format(logFilePath)
@@ -29,4 +30,4 @@ os.system(cmd)
 cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01 -vframes 1 {outFilePath}.jpg'
 os.system(cmd2)
 time.sleep(3)
-os.remove(logFilePath)
+os.rename(logFilePath,"/home/ubuntu/indika/playlistdl-bot/log.txt")

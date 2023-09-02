@@ -1,16 +1,17 @@
-import asyncio,logging,os,random,string,re,subprocess,time,shutil
+import asyncio,logging,os,random,string,re,subprocess,time,shutil,platform,requests,dotenv
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageEntityUrl
-from dotenv import load_dotenv
 from datetime import datetime
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-load_dotenv(override=True)
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file, override=True)
 
 API_ID = int(os.getenv("TG_API_ID"))
 API_HASH = os.getenv("TG_API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 LOG_GROUP = int(os.getenv("LOG_GROUP_ID"))
+is_win = platform.system()=='Windows'
 
 bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
@@ -56,7 +57,10 @@ def check(log_file):
         print(repr(e))
         return ''
 async def show_ffmpeg_status(cmd, msg, logfile):
-    subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
+    if is_win:
+        subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
+    else:
+        os.system(' '.join(cmd)+" 1> /dev/null 2>&1 & ")
     await asyncio.sleep(10)
     last = ''
     last_edit_time = time.time()
@@ -97,21 +101,21 @@ async def upload_and_send(event, msg, outFilePath, outFileName, caption):
         supports_streaming=True
     )
 
-@bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| ([a-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
+@bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| ([\u0D80-\u0DFFa-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
 async def handler(event):
     msg = await event.respond('wait...')
     tmpdir = os.path.join('files', ''.join([random.choice(string.ascii_letters+string.digits) for i in range(15)]))
     os.makedirs(tmpdir)
     try:
         inFileName = find_all_urls(event.message)[0]
-        outFileName = f'{event.pattern_match[2]}.mp4'
+        outFileName = f'{event.pattern_match[2]}.mp4'.replace(" ", "_")
         outFilePath = os.path.join(tmpdir, outFileName)
-        cmd = ['python', 'converter.py', inFileName, outFilePath]
+        cmd = ['python' if is_win else 'python3', 'converter.py', inFileName, outFilePath]
         await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
         await msg.edit('Now uploading...')
         parts = 1
         if 1024**3*2 < os.path.getsize(outFilePath):
-            cmd = ['python', 'splitter.py', outFilePath]
+            cmd = ['python' if is_win else 'python3', 'splitter.py', outFilePath]
             await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
             with open(f"{outFilePath}.parts", 'r') as f:
                 parts = int(f.read().strip())
@@ -127,6 +131,31 @@ async def handler(event):
     except Exception as e:
         await msg.edit(repr(e))
     shutil.rmtree(tmpdir)
+
+@bot.on(events.NewMessage(pattern=r"^/add_proxy (http://[a-zA-Z0-9\-_.]+:[a-zA-Z0-9\-_.]+@[a-zA-Z0-9\\-_.]+:\d+)$", func=lambda e: e.is_private))
+async def handler(event):
+    msg = await event.respond("checking proxy...")
+    try:
+        proxy = event.pattern_match[1]
+        p = {'http': proxy,'https': proxy}
+        r = requests.get('http://ip-api.com/json', proxies=p, timeout=5).json()
+        os.environ["HTTP_PROXY"] = proxy
+        dotenv.set_key(dotenv_file, "HTTP_PROXY", proxy)
+        presult = '\n'.join([f"{k}: `{r[k]}`" for k in r])
+        await msg.edit(presult)
+        await msg.edit(presult+'\n\nproxy added successfully ✅')
+    except Exception as e:
+        await msg.edit("Error: "+repr(e))
+
+@bot.on(events.NewMessage(pattern=r"^/proxy_status$", func=lambda e: e.is_private))
+async def handler(event):
+    msg = await event.respond("checking proxy...")
+    try:
+        p = {'http': os.environ["HTTP_PROXY"],'https': os.environ["HTTP_PROXY"]}
+        r = requests.get('http://ip-api.com/json', proxies=p, timeout=5).json()
+        await msg.edit('\n'.join([f"{k}: `{r[k]}`" for k in r]))
+    except Exception as e:
+        await msg.edit("Error: "+repr(e))
 
 with bot:
     bot.run_until_disconnected()
