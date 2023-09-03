@@ -132,7 +132,7 @@ async def handler(event):
         await msg.edit(repr(e))
     shutil.rmtree(tmpdir)
 
-@bot.on(events.NewMessage(pattern=r"^/add_proxy (http://[a-zA-Z0-9\-_.]+:[a-zA-Z0-9\-_.]+@[a-zA-Z0-9\\-_.]+:\d+)$", func=lambda e: e.is_private))
+@bot.on(events.NewMessage(pattern=r"^/add_proxy (http://[a-zA-Z0-9\-_.]+:[a-zA-Z0-9\-_.]+@[a-zA-Z0-9\-_.]+:\d+)$", func=lambda e: e.is_private))
 async def handler(event):
     msg = await event.respond("checking proxy...")
     try:
