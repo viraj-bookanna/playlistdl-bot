@@ -4,3 +4,5 @@ python-dotenv
 hachoir
 cryptg
 pillow
+pycryptodome
+
