@@ -151,11 +151,23 @@ async def handler(event):
 async def handler(event):
     msg = await event.respond("checking proxy...")
     try:
-        p = {'http': os.environ["HTTP_PROXY"],'https': os.environ["HTTP_PROXY"]}
+        proxy = os.getenv("HTTP_PROXY", '')
+        use_proxy = os.getenv("USE_PROXY", 'False')=='True'
+        p = {'http': proxy,'https': proxy} if use_proxy else None
         r = requests.get('http://ip-api.com/json', proxies=p, timeout=5).json()
         await msg.edit('\n'.join([f"{k}: `{r[k]}`" for k in r]))
     except Exception as e:
         await msg.edit("Error: "+repr(e))
+
+@bot.on(events.NewMessage(pattern=r"^/proxy_on$", func=lambda e: e.is_private))
+async def handler(event):
+    dotenv.set_key(dotenv_file, "USE_PROXY", 'True')
+    await event.respond("proxy is on")
+
+@bot.on(events.NewMessage(pattern=r"^/proxy_off$", func=lambda e: e.is_private))
+async def handler(event):
+    dotenv.set_key(dotenv_file, "USE_PROXY", 'False')
+    await event.respond("proxy is off")
 
 with bot:
     bot.run_until_disconnected()

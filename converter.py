@@ -18,9 +18,12 @@ redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 headers = ''
 if 'aplusewings' in inFileName:
-    proxy = os.environ["HTTP_PROXY"]
-    cookie = decode_captcha(requests.get(inFileName, proxies={"http":proxy,"https":proxy}, headers={'User-Agent': 'android'}, verify=False).text)
-    headers = f' -http_proxy {proxy}  -headers "Cookie: {cookie}"'
+    proxy = os.getenv("HTTP_PROXY", '')
+    use_proxy = os.getenv("USE_PROXY", 'False')=='True'
+    proxies = {"http":proxy,"https":proxy} if use_proxy else None
+    http_proxy = f' -http_proxy {proxy}' if use_proxy else ''
+    cookie = decode_captcha(requests.get(inFileName, proxies=proxies, headers={'User-Agent': 'android'}, verify=False).text)
+    headers = f'{http_proxy} -headers "Cookie: {cookie}"'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
 redir = redir.format(logFilePath)
