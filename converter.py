@@ -33,4 +33,4 @@ os.system(cmd)
 cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01 -vframes 1 {outFilePath}.jpg'
 os.system(cmd2)
 time.sleep(3)
-#os.remove(logFilePath)
+os.remove(logFilePath)
