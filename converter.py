@@ -2,8 +2,8 @@ import os,sys,urllib.parse,re,requests,time,platform
 from Crypto.Cipher import AES
 
 def decode_captcha(data):
-    pattern = 'var a=toNumbers\("([0-9a-f]{32})"\),b=toNumbers\("([0-9a-f]{32})"\),c=toNumbers\("([0-9a-f]{32})"\);document.cookie="([^"]+?)"'
-    pattern2 = 'document.cookie="([^"]+?)"'
+    pattern = r'var a=toNumbers\("([0-9a-f]{32})"\),b=toNumbers\("([0-9a-f]{32})"\),c=toNumbers\("([0-9a-f]{32})"\);document.cookie="([^"]+?)"'
+    pattern2 = r'document.cookie="([^"]+?)"'
     m = re.search(pattern, data)
     m2 = re.search(pattern2, data)
     if m:
@@ -18,7 +18,7 @@ redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 headers = ''
 if 'aplusewings' in inFileName:
-    proxy = os.getenv("HTTP_PROXY", '')
+    proxy = os.getenv("PROXY_URL", '')
     use_proxy = os.getenv("USE_PROXY", 'False')=='True'
     proxies = {"http":proxy,"https":proxy} if use_proxy else None
     http_proxy = f' -http_proxy {proxy}' if use_proxy else ''
@@ -33,4 +33,4 @@ os.system(cmd)
 cmd2 = f'ffmpeg -i {outFilePath} -ss 00:00:01 -vframes 1 {outFilePath}.jpg'
 os.system(cmd2)
 time.sleep(3)
-os.remove(logFilePath)
+#os.remove(logFilePath)

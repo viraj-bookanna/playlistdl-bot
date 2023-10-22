@@ -139,8 +139,8 @@ async def handler(event):
         proxy = event.pattern_match[1]
         p = {'http': proxy,'https': proxy}
         r = requests.get('http://ip-api.com/json', proxies=p, timeout=5).json()
-        os.environ["HTTP_PROXY"] = proxy
-        dotenv.set_key(dotenv_file, "HTTP_PROXY", proxy)
+        os.environ["PROXY_URL"] = proxy
+        dotenv.set_key(dotenv_file, "PROXY_URL", proxy)
         presult = '\n'.join([f"{k}: `{r[k]}`" for k in r])
         await msg.edit(presult)
         await msg.edit(presult+'\n\nproxy added successfully ✅')
@@ -151,7 +151,7 @@ async def handler(event):
 async def handler(event):
     msg = await event.respond("checking proxy...")
     try:
-        proxy = os.getenv("HTTP_PROXY", '')
+        proxy = os.getenv("PROXY_URL", '')
         use_proxy = os.getenv("USE_PROXY", 'False')=='True'
         p = {'http': proxy,'https': proxy} if use_proxy else None
         r = requests.get('http://ip-api.com/json', proxies=p, timeout=5).json()
