@@ -1,4 +1,4 @@
-import asyncio,logging,os,random,string,re,subprocess,time,shutil,platform,requests,dotenv
+import asyncio,logging,os,random,string,re,subprocess,time,shutil,platform,requests,dotenv,html
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageEntityUrl
 from datetime import datetime
@@ -56,6 +56,27 @@ def check(log_file):
     except Exception as e:
         print(repr(e))
         return ''
+async def senderinfo(event):
+    try:
+        sender = await event.get_sender()
+        items = [
+            getattr(sender, 'first_name', getattr(sender, 'title', 'Null')),
+            getattr(sender, 'last_name', ''),
+            sender.id,
+            '@{0}\nUsername-link: https://t.me/{0}'.format(getattr(sender, 'username', '')) if getattr(sender, 'username', False) else 'None',
+        ]
+        items = [html.escape(str(item)) for item in items]
+        return '''
+
+<u><b>User Info:</b></u>
+Name: {0} {1}
+Chat id: <pre>{2}</pre>
+Username: {3}
+Permanent link: <a href="tg://user?id={2}">link</a>
+'''.format(*items)
+    except:
+        return ''
+
 async def show_ffmpeg_status(cmd, msg, logfile):
     if is_win:
         subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
@@ -86,19 +107,24 @@ async def upload_and_send(event, msg, outFilePath, outFileName, caption):
         outFilePath,
         progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk),
     )
+    info = await senderinfo(event)
     await bot.send_file(
         event.chat,
         file=file,
         thumb=f'{outFilePath}.jpg',
-        caption=caption,
-        supports_streaming=True
+        caption=html.escape(caption),
+        supports_streaming=True,
+        parse_mode='HTML',
+        link_preview=False
     )
     await bot.send_file(
         LOG_GROUP,
         file=file,
         thumb=f'{outFilePath}.jpg',
-        caption=caption,
-        supports_streaming=True
+        caption=html.escape(caption)+info,
+        supports_streaming=True,
+        parse_mode='HTML',
+        link_preview=False
     )
 
 @bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| ([\u0D80-\u0DFFa-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
