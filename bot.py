@@ -187,11 +187,13 @@ async def handler(event):
 
 @bot.on(events.NewMessage(pattern=r"^/proxy_on$", func=lambda e: e.is_private))
 async def handler(event):
+    os.environ["USE_PROXY"] = 'True'
     dotenv.set_key(dotenv_file, "USE_PROXY", 'True')
     await event.respond("proxy is on")
 
 @bot.on(events.NewMessage(pattern=r"^/proxy_off$", func=lambda e: e.is_private))
 async def handler(event):
+    os.environ["USE_PROXY"] = 'False'
     dotenv.set_key(dotenv_file, "USE_PROXY", 'False')
     await event.respond("proxy is off")
 
