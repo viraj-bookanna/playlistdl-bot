@@ -1,5 +1,8 @@
-import os,sys,urllib.parse,re,requests,time,platform
+import os,sys,urllib.parse,re,requests,time,platform,dotenv
 from Crypto.Cipher import AES
+
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file, override=True)
 
 def decode_captcha(data):
     pattern = r'var a=toNumbers\("([0-9a-f]{32})"\),b=toNumbers\("([0-9a-f]{32})"\),c=toNumbers\("([0-9a-f]{32})"\);document.cookie="([^"]+?)"'
