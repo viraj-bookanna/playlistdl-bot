@@ -20,13 +20,15 @@ def decode_captcha(data):
 redir = '1>NUL 2>"{}"' if platform.system()=='Windows' else '1> "{}" 2>&1'
 inFileName = sys.argv[1]
 headers = ''
-if 'aplusewings' in inFileName:
-    proxy = os.getenv("PROXY_URL", '')
+proxy = os.getenv("PROXY_URL", '')
+if '.rf.gd' in inFileName:
     use_proxy = os.getenv("USE_PROXY", 'False')=='True'
     proxies = {"http":proxy,"https":proxy} if use_proxy else None
     http_proxy = f' -http_proxy {proxy}' if use_proxy else ''
     cookie = decode_captcha(requests.get(inFileName, proxies=proxies, headers={'User-Agent': 'android'}, verify=False).text)
     headers = f'{http_proxy} -headers "Cookie: {cookie}"'
+elif os.getenv("USE_PROXY", 'False')=='True':
+    headers = f' -http_proxy {proxy}'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
 redir = redir.format(logFilePath)
