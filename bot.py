@@ -1,4 +1,4 @@
-import asyncio,logging,os,random,string,re,subprocess,time,shutil,platform,requests,dotenv,html
+import asyncio,logging,os,random,string,re,subprocess,time,shutil,platform,requests,dotenv,html,hashlib
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageEntityUrl
 from datetime import datetime
@@ -101,11 +101,12 @@ async def upload_callback(current, total, event, file_org_name, tk):
         await event.edit("Uploading {}\nFile Name: {}\nSize: {}\nUploaded: {}".format(progress_bar(percentage), file_org_name, humanify(total), humanify(current)))
         tk.last = percentage
         tk.last_edited_time = time.time()
-async def upload_and_send(event, msg, outFilePath, outFileName, caption):
+async def upload_and_send(event, msg, outFilePath, originalFileName, caption):
     tk = TimeKeeper()
     file = await bot.upload_file(
         outFilePath,
-        progress_callback=lambda c,t:upload_callback(c,t,msg,outFileName,tk),
+        file_name=originalFileName,
+        progress_callback=lambda c,t:upload_callback(c,t,msg,originalFileName,tk),
     )
     info = await senderinfo(event)
     await bot.send_file(
@@ -134,7 +135,8 @@ async def handler(event):
     os.makedirs(tmpdir)
     try:
         inFileName = find_all_urls(event.message)[0]
-        outFileName = f'{event.pattern_match[2]}.mp4'.replace(" ", "_")
+        orgFileName = f'{event.pattern_match[2]}.mp4'
+        outFileName = hashlib.md5(orgFileName.encode()).hexdigest()+'.mp4'
         outFilePath = os.path.join(tmpdir, outFileName)
         cmd = ['python' if is_win else 'python3', 'converter.py', inFileName, outFilePath]
         await show_ffmpeg_status(cmd, msg, f"{outFilePath}.log")
