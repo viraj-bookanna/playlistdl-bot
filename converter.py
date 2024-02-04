@@ -31,6 +31,8 @@ elif os.getenv("USE_PROXY", 'False')=='True':
     headers = f' -http_proxy {proxy}'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
+with open(logFilePath, 'w') as f:
+    pass
 redir = redir.format(logFilePath)
 cmd = f'ffmpeg{headers} -i "{inFileName}" -c copy "{outFilePath}" {redir}'
 print(cmd)

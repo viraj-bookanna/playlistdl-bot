@@ -82,7 +82,7 @@ async def show_ffmpeg_status(cmd, msg, logfile):
         subprocess.Popen(cmd, shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
     else:
         os.system(' '.join(cmd)+" 1> /dev/null 2>&1 & ")
-    await asyncio.sleep(10)
+    await asyncio.sleep(3)
     last = ''
     last_edit_time = time.time()
     while os.path.isfile(logfile):
