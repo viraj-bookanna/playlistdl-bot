@@ -1,4 +1,4 @@
-import os,sys,urllib.parse,re,requests,time,platform,dotenv
+import os,sys,urllib.parse,re,requests,time,platform,dotenv,json
 from Crypto.Cipher import AES
 
 dotenv_file = dotenv.find_dotenv()
@@ -22,12 +22,8 @@ inFileName = sys.argv[1]
 headers = ''
 proxy = os.getenv("PROXY_URL", '')
 if '.rf.gd' in inFileName:
-    use_proxy = os.getenv("USE_PROXY", 'False')=='True'
-    proxies = {"http":proxy,"https":proxy} if use_proxy else None
-    http_proxy = f' -http_proxy {proxy}' if use_proxy else ''
-    cookie = decode_captcha(requests.get(inFileName, proxies=proxies, headers={'User-Agent': 'android'}, verify=False).text)
-    headers = f'{http_proxy} -headers "Cookie: {cookie}"'
-elif os.getenv("USE_PROXY", 'False')=='True':
+    inFileName = f'https://ecvod.ranjanaththanayake4008.workers.dev/?reqdata='+urllib.parse.quote(json.dumps({'url':inFileName}))
+if os.getenv("USE_PROXY", 'False')=='True':
     headers = f' -http_proxy {proxy}'
 outFilePath = sys.argv[2]
 logFilePath = f"{outFilePath}.log"
