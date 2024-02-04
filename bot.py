@@ -135,7 +135,7 @@ async def handler(event):
     os.makedirs(tmpdir)
     try:
         inFileName = find_all_urls(event.message)[0]
-        orgFileName = f'{event.pattern_match[2]}.mp4'
+        orgFileName = event.pattern_match[2]
         outFileName = hashlib.md5(orgFileName.encode()).hexdigest()+'.mp4'
         outFilePath = os.path.join(tmpdir, outFileName)
         cmd = ['python' if is_win else 'python3', 'converter.py', inFileName, outFilePath]
@@ -152,7 +152,7 @@ async def handler(event):
             await upload_and_send(event,
                 msg,
                 outFilePath if parts==1 else f'{outFilePath}{i}.mp4',
-                outFileName if parts==1 else f'{outFileName}_{i}',
+                f'{orgFileName}.mp4' if parts==1 else f'{orgFileName}_{i}.mp4',
                 event.pattern_match[2] if parts==1 else f'{event.pattern_match[2]} part {i}'
             )
         await msg.delete()
