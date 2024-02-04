@@ -128,7 +128,7 @@ async def upload_and_send(event, msg, outFilePath, originalFileName, caption):
         link_preview=False
     )
 
-@bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| ([\u0D80-\u0DFFa-zA-Z0-9./\- ]+))$", func=lambda e: e.is_private))
+@bot.on(events.NewMessage(pattern=r"^(https?://.+)(?: \| (.+))$", func=lambda e: e.is_private))
 async def handler(event):
     msg = await event.respond('wait...')
     tmpdir = os.path.join('files', ''.join([random.choice(string.ascii_letters+string.digits) for i in range(15)]))
